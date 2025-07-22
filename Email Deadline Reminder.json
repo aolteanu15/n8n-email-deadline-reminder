@@ -1,0 +1,146 @@
+{
+  "name": "Email Deadline Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "1f91aa97-b035-4890-8c2b-ebcbe832f363",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "llama3"
+            },
+            {
+              "name": "prompt",
+              "value": "=`Extract any deadline for response from this email. Answer in this format: DEADLINE: [value]. EMAIL:\\n\" + $json.body }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        0
+      ],
+      "id": "8b6fe8fd-8566-4631-a723-d3d011e4b80c",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/me/messages?$filter=flag/flagStatus eq 'flagged'",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        160,
+        0
+      ],
+      "id": "05d356f6-1406-4ff4-ac08-6145656d9824",
+      "name": "HTTP Request",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "QxF2jKeUaJnDbYUt",
+          "name": "Microsoft Graph Email"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "info@colad.ro",
+        "toEmail": "info@colad.ro",
+        "subject": "Deadline-urile zilei",
+        "emailFormat": "text",
+        "text": "={{ $json[\"response\"] || \"Niciun deadline pentru astazi.\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        464,
+        0
+      ],
+      "id": "18e2b30c-e9f5-4876-9d06-8cef27176d9d",
+      "name": "Send email",
+      "webhookId": "eea89365-a2e0-4a1c-b947-8e8d61498b7a",
+      "credentials": {
+        "smtp": {
+          "id": "0BdeJw53dq0cHMhg",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3796caa7-4c37-4284-ae96-3e211fe5a058",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7d15f84c92b15ee25e26f101edc586d0f0036b758a0e89d5fca9fd939e21ce68"
+  },
+  "id": "sPojmhbpriIUaMSA",
+  "tags": []
+}
